@@ -162,11 +162,14 @@ class WebapiController( BaseController ):
     oaToken = oauth2.Token( reqData[ 'request' ], reqData[ 'secret' ] )
     oaToken.set_verifier( verifier )
 
+    print reqData[ 'callback' ]
+
     oaRequest = oauth2.Request.from_consumer_and_token( oaConsumer,
                                                         oaToken,
                                                         http_method = 'GET',
                                                         http_url = reqData[ 'callback' ] )
     oaRequest.sign_request( oauth2.SignatureMethod_HMAC_SHA1(), oaConsumer, oaToken )
+    print oaRequest.to_url()
 
     return redirect_to( str( oaRequest.to_url() ) )
 

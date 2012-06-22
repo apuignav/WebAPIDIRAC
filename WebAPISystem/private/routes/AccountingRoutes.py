@@ -20,7 +20,7 @@ def getJobsHistory():
   if not result[ 'OK' ]:
     bottle.abort( 401, result[ 'Message' ] )
   condDict = {}
-  if 'onlyme' in bottle.request.params:
+  if 'allOwners' not in bottle.request.params:
     condDict[ 'User' ] = gOAData.userName
   timeSpan = 86400
   if 'timeSpan' in bottle.request.params:
@@ -28,6 +28,7 @@ def getJobsHistory():
       timeSpan = max( 86400, int( bottle.request.params[ 'timeSpan' ] ) )
     except ValueError:
       bottle.abort( 400, "timeSpan has to be an integer!" )
+  print "[DEBUG] condDict is %s" % condDict
   rpg = ReportsClient( rpcClient = getRPCClient("Accounting/ReportGenerator"), transferClient = getTransferClient("Accounting/ReportGenerator") )
   end = datetime.datetime.utcnow()
   start = end - datetime.timedelta( seconds = timeSpan )

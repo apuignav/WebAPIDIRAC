@@ -82,7 +82,7 @@ def __getGroupedJobs( selDict, groupBy, maxJobsPerGroup = 100 ):
   retDict = {'entries' : len(groupValues), groupBy : []}
   for groupValue in groupValues:
     sDict = dict(baseDict)
-    sDict[ groupBy ] = groupValues
+    sDict[ groupBy ] = groupValue
     result = __getJobs( sDict, 0, maxJobs = maxJobsPerGroup )
     if result:
       result[ groupBy ] = groupValue
@@ -295,20 +295,30 @@ def postJobs():
   return { 'sandbox' : isb, 'jobs' : jobs }
 
 
-@bottle.route( "/jobs/:jid", method = 'PUT' )
+@bottle.route( "/jobs/reschedule/:jid", method = 'GET' )
 def putJob( jid ):
   result = gOAManager.authorize()
   if not result[ 'OK' ]:
     bottle.abort( 401, result[ 'Message' ] )
   #Modify a job
-  pass
+  rpc = getRPCClient( 'WorkloadManagement/JobManager' )
+  result = rpc.rescheduleJob( jid )
+  if not result[ 'OK' ]:
+    if 'InvalidJobIDs' in result:
+      bottle.abort( 400, "Invalid JID" )
+    if 'FailedJobIDs' in result:
+      bottle.abort( 500, "Could not reschedule JID" )
+    else:
+      bottle.abort( 401, result[ 'Message' ] )
+
+  return { 'jid' : jid }
 
 @bottle.route( "/jobs/:jid", method = 'DELETE' )
 def killJob( jid ):
   result = gOAManager.authorize()
   if not result[ 'OK' ]:
     bottle.abort( 401, result[ 'Message' ] )
-  wms = getWMSClient()
+  wms = getRPCClient( "WorkloadManagement/JobManager" )
   result = wms.killJob( jid )
   if not result[ 'OK' ]:
     if 'NonauthorizedJobIDs' in result:
